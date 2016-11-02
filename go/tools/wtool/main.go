@@ -1,13 +1,33 @@
-/*wtool augments your bazel WORKSPACE file with new_go_repository entries
+/* Copyright 2016 The Bazel Authors. All rights reserved.
 
-Example Usage: wtool com_github_golang_glog com_google_cloud_go
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+/*
+wtool augments your bazel WORKSPACE file with new_go_repository entries
+
+Example Usage:
+    wtool com_github_golang_glog com_google_cloud_go
+
 will add 2 new_go_repository to your WORKSPACE
 by converting com_github_golang_glog -> github.com/golang/glog
 and so forth and then doing a 'git ls-remote' to get
 the latest commit.
 
-if wtool cannot figure out the bazel -> Go mapping, try
-Other Usage: wtool -asis github.com/golang/glog
+If wtool cannot figure out the bazel -> Go mapping, try
+Other Usage:
+    wtool -asis github.com/golang/glog
+
 which takes an importpath, and computes the bazel name + ls-remote as above.
 */
 package main
@@ -75,7 +95,7 @@ func nameAndImportpath(name string) (string, string, error) {
 	}
 	s := strings.Split(name, "_")
 	if len(s) < 4 {
-		return "", "", fmt.Errorf("only 4-part strings supported: %q", name)
+		return "", "", fmt.Errorf("only 4-part or longer strings supported for workspace names: %q", name)
 	}
 	rest := strings.Join(s[3:], "-")
 	if strings.HasPrefix(name, "org_golang_google") {
@@ -92,7 +112,6 @@ func findImport(nameIn string) (bzl.Expr, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf(importpath)
 	r, err := vcs.RepoRootForImportPath(importpath, false)
 	if err != nil {
 		return nil, err
@@ -100,7 +119,8 @@ func findImport(nameIn string) (bzl.Expr, error) {
 	if r.VCS.Cmd != "git" {
 		return nil, fmt.Errorf("only git supported, not %q", r.VCS.Cmd)
 	}
-	commit, err := lsRemote(r.Repo)
+	// TODO(pmbethe09): allow the user to specify a tag other than HEAD
+	commit, err := lsRemote(r.Repo, "HEAD")
 	if err != nil {
 		return nil, err
 	}
@@ -122,8 +142,8 @@ func attr(key, val string) *bzl.BinaryExpr {
 	}
 }
 
-func lsRemote(repo string) (string, error) {
-	cmd := exec.Command("git", "ls-remote", repo)
+func lsRemote(repo, tag string) (string, error) {
+	cmd := exec.Command("git", "ls-remote", repo, tag)
 	r, err := cmd.StdoutPipe()
 	if err != nil {
 		return "", err
@@ -138,7 +158,6 @@ func lsRemote(repo string) (string, error) {
 		}
 		return "", fmt.Errorf("nothing returned from ls-remote %q", repo)
 	}
-	log.Printf(b.Text())
 	go cmd.Wait()
 	return strings.Split(b.Text(), "\t")[0], nil
 }
