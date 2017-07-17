@@ -6,7 +6,7 @@ Bazel ≥0.5.2 | linux-x86_64 | ubuntu_15.10-x86_64 | darwin-x86_64
 
 ## Announcements
 
-* **July 14, 2017** Release
+* **July 17, 2017** Release
 [0.5.2](https://github.com/bazelbuild/rules_go/releases/tag/0.5.2) is now
 available! This fixes an issue with Bazel at HEAD. Note that Bazel 0.5.2 is
 now required.
