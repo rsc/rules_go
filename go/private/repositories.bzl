@@ -53,6 +53,7 @@ _sdk_repositories = {
     # 1.7.5 repositories
     'go1.7.5.linux-amd64.tar.gz': '2e4dd6c44f0693bef4e7b46cc701513d74c3cc44f2419bf519d7868b12931ac3',
     'go1.7.5.darwin-amd64.tar.gz': '2e2a5e0a5c316cf922cf7d59ee5724d49fc35b07a154f6c4196172adfc14b2ca',
+    'https://go-boringcrypto.storage.googleapis.com/go1.9rc2.boringcrypto.r1.linux-amd64.tar.gz': 'a453918b6ed0208748b2d6e0def31abf528d649d5cd8ecc5b21c4fd46eb38aa1',
 }
 
 def go_repositories(
@@ -61,6 +62,10 @@ def go_repositories(
     go_darwin = None):
 
   for filename, sha256 in _sdk_repositories.items():
+    url = "https://storage.googleapis.com/golang/" + filename
+    if filename.startswith('https://'):
+        url = filename
+        filename = filename.split('/')[-1]
     name = filename
     for suffix in [".tar.gz", ".zip"]:
       if name.endswith(suffix):
@@ -68,7 +73,7 @@ def go_repositories(
     name = name.replace("-", "_").replace(".", "_")
     go_sdk_repository(
         name = name,
-        url = "https://storage.googleapis.com/golang/" + filename,
+        url = url,
         sha256 = sha256,
         strip_prefix = "go",
     )
